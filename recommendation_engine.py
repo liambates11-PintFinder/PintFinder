@@ -1,5 +1,4 @@
-# recommendation_engine.py
-
+from personality_engine import classify_pub
 from typing import Any
 
 
@@ -81,9 +80,7 @@ def extract_occasion_preferences(occasion: Any) -> dict:
     """
     Extract feature preferences from an occasion template.
 
-    The function is intentionally flexible so it can support occasion
-    dictionaries with keys such as:
-
+    Supported occasion keys include:
         preferences
         feature_weights
         features
@@ -104,7 +101,7 @@ def extract_occasion_preferences(occasion: Any) -> dict:
         occasion_preferences = occasion.get(key)
 
         if isinstance(occasion_preferences, dict):
-            return occasion_preferences
+            return occasion_preferences.copy()
 
     return {}
 
@@ -119,7 +116,9 @@ def combine_preferences(
     User selections take priority over occasion defaults.
     """
 
-    combined_preferences = extract_occasion_preferences(occasion)
+    combined_preferences = extract_occasion_preferences(
+        occasion
+    )
 
     if isinstance(user_preferences, dict):
         combined_preferences.update(user_preferences)
@@ -135,9 +134,15 @@ def calculate_rating_score(rating: Any) -> float:
     if not isinstance(rating, (int, float)):
         return 0
 
-    bounded_rating = max(0, min(float(rating), 5))
+    bounded_rating = max(
+        0,
+        min(float(rating), 5),
+    )
 
-    return round(bounded_rating * RATING_MULTIPLIER, 2)
+    return round(
+        bounded_rating * RATING_MULTIPLIER,
+        2,
+    )
 
 
 def calculate_distance_score(
@@ -148,13 +153,19 @@ def calculate_distance_score(
     Award more points to closer pubs.
 
     A pub at zero minutes receives the maximum distance score.
-    A pub at the user's maximum distance receives zero distance points.
+    A pub at the maximum distance receives zero distance points.
     """
 
-    if not isinstance(distance_minutes, (int, float)):
+    if not isinstance(
+        distance_minutes,
+        (int, float),
+    ):
         return 0
 
-    if not isinstance(maximum_distance, (int, float)):
+    if not isinstance(
+        maximum_distance,
+        (int, float),
+    ):
         return 0
 
     if maximum_distance <= 0:
@@ -163,11 +174,20 @@ def calculate_distance_score(
     if distance_minutes > maximum_distance:
         return 0
 
-    distance_ratio = distance_minutes / maximum_distance
+    distance_ratio = (
+        distance_minutes
+        / maximum_distance
+    )
 
-    score = MAX_DISTANCE_SCORE * (1 - distance_ratio)
+    score = (
+        MAX_DISTANCE_SCORE
+        * (1 - distance_ratio)
+    )
 
-    return round(max(score, 0), 2)
+    return round(
+        max(score, 0),
+        2,
+    )
 
 
 def score_feature_preferences(
@@ -189,36 +209,58 @@ def score_feature_preferences(
     missing_features = []
     feature_breakdown = {}
 
-    for feature_name, preference_value in preferences.items():
-        preference_level = get_preference_level(preference_value)
+    for (
+        feature_name,
+        preference_value,
+    ) in preferences.items():
+        preference_level = get_preference_level(
+            preference_value
+        )
 
         if preference_level is None:
             continue
 
-        pub_has_feature = bool(
-            getattr(pub, feature_name, False)
+        pub_feature_value = getattr(
+            pub,
+            feature_name,
+            None,
+        )
+
+        pub_has_feature = (
+            pub_feature_value is True
         )
 
         if preference_level == "must":
             if pub_has_feature:
                 points = MUST_MATCH_REWARD
-                matched_features.append(feature_name)
+                matched_features.append(
+                    feature_name
+                )
             else:
                 points = -MUST_MISS_PENALTY
-                missing_features.append(feature_name)
+                missing_features.append(
+                    feature_name
+                )
 
         else:
             if pub_has_feature:
                 points = NICE_MATCH_REWARD
-                matched_features.append(feature_name)
+                matched_features.append(
+                    feature_name
+                )
             else:
                 points = -NICE_MISS_PENALTY
-                missing_features.append(feature_name)
+                missing_features.append(
+                    feature_name
+                )
 
         feature_score += points
 
-        feature_breakdown[feature_name] = {
+        feature_breakdown[
+            feature_name
+        ] = {
             "preference": preference_level,
+            "value": pub_feature_value,
             "matched": pub_has_feature,
             "points": points,
         }
@@ -239,22 +281,158 @@ def create_recommendation(
     score_breakdown: dict,
 ) -> dict:
     """
-    Convert a Pub object into the recommendation dictionary expected
+    Convert a Pub object into the dictionary expected
     by the display layer.
     """
+    personality = classify_pub(pub)
 
     return {
         "pub": pub,
+
+        # Core pub information
         "name": pub.name,
         "rating": pub.rating,
-        "distance_minutes": pub.distance_minutes,
-        "personality": pub.personality,
-        "personality_description": pub.personality_description,
-        "personality_tags": list(pub.personality_tags),
+        "distance_minutes": (
+            pub.distance_minutes
+        ),
         "score": round(score, 2),
-        "matched_features": matched_features,
-        "missing_features": missing_features,
-        "score_breakdown": score_breakdown,
+
+        # Google identifiers and venue details
+        "place_id": getattr(
+            pub,
+            "place_id",
+            None,
+        ),
+        "address": getattr(
+            pub,
+            "address",
+            None,
+        ),
+        "website": getattr(
+            pub,
+            "website",
+            None,
+        ),
+        "phone_number": getattr(
+            pub,
+            "phone_number",
+            None,
+        ),
+        "google_maps_url": getattr(
+            pub,
+            "google_maps_url",
+            None,
+        ),
+        "price_level": getattr(
+            pub,
+            "price_level",
+            None,
+        ),
+        "open_now": getattr(
+            pub,
+            "open_now",
+            None,
+        ),
+
+        # Google-supported features
+        "football": getattr(
+            pub,
+            "football",
+            None,
+        ),
+        "sports_tv": getattr(
+            pub,
+            "sports_tv",
+            None,
+        ),
+        "dog_friendly": getattr(
+            pub,
+            "dog_friendly",
+            None,
+        ),
+        "live_music": getattr(
+            pub,
+            "live_music",
+            None,
+        ),
+        "cocktails": getattr(
+            pub,
+            "cocktails",
+            None,
+        ),
+        "food": getattr(
+            pub,
+            "food",
+            None,
+        ),
+        "beer_garden": getattr(
+            pub,
+            "beer_garden",
+            None,
+        ),
+        "late_open": getattr(
+            pub,
+            "late_open",
+            None,
+        ),
+        "serves_beer": getattr(
+            pub,
+            "serves_beer",
+            None,
+        ),
+
+        # Future PintFinder enrichment
+        "pool_table": getattr(
+            pub,
+            "pool_table",
+            None,
+        ),
+        "guinness": getattr(
+            pub,
+            "guinness",
+            None,
+        ),
+        "family_friendly": getattr(
+            pub,
+            "family_friendly",
+            None,
+        ),
+        "quiz_night": getattr(
+            pub,
+            "quiz_night",
+            None,
+        ),
+        "darts": getattr(
+            pub,
+            "darts",
+            None,
+        ),
+        "craft_beer": getattr(
+            pub,
+            "craft_beer",
+            None,
+        ),
+    
+        # Personality
+         
+"personality": personality.personality,
+
+"personality_description": personality.description,
+
+"personality_tags": personality.tags,
+
+"personality_confidence": personality.confidence,
+
+        # Recommendation results
+        "matched_features": (
+            matched_features
+        ),
+        "missing_features": (
+            missing_features
+        ),
+        "score_breakdown": (
+            score_breakdown
+        ),
     }
 
 
@@ -268,14 +446,14 @@ def calculate_recommendations(
     Calculate and rank PintFinder recommendations.
 
     Scoring currently considers:
-
-    - Google rating
-    - Distance
-    - Must-have preferences
-    - Nice-to-have preferences
+        - Google rating
+        - Distance
+        - Must-have preferences
+        - Nice-to-have preferences
 
     Pubs outside the user's maximum distance are excluded.
-    Missing must-have features receive a large penalty rather than
+
+    Missing must-have features receive a penalty rather than
     automatically removing the pub.
     """
 
@@ -287,22 +465,40 @@ def calculate_recommendations(
     recommendations = []
 
     for pub in pubs:
-        distance_minutes = pub.distance_minutes
+        distance_minutes = getattr(
+            pub,
+            "distance_minutes",
+            None,
+        )
 
         if (
-            isinstance(maximum_distance, (int, float))
+            isinstance(
+                maximum_distance,
+                (int, float),
+            )
             and maximum_distance > 0
-            and distance_minutes > maximum_distance
+            and isinstance(
+                distance_minutes,
+                (int, float),
+            )
+            and distance_minutes
+            > maximum_distance
         ):
             continue
 
         rating_score = calculate_rating_score(
-            pub.rating
+            getattr(
+                pub,
+                "rating",
+                0,
+            )
         )
 
-        distance_score = calculate_distance_score(
-            distance_minutes,
-            maximum_distance,
+        distance_score = (
+            calculate_distance_score(
+                distance_minutes,
+                maximum_distance,
+            )
         )
 
         (
@@ -325,25 +521,42 @@ def calculate_recommendations(
             "rating": rating_score,
             "distance": distance_score,
             "features": feature_score,
-            "feature_details": feature_breakdown,
-            "total": round(total_score, 2),
+            "feature_details": (
+                feature_breakdown
+            ),
+            "total": round(
+                total_score,
+                2,
+            ),
         }
 
-        recommendation = create_recommendation(
-            pub=pub,
-            score=total_score,
-            matched_features=matched_features,
-            missing_features=missing_features,
-            score_breakdown=score_breakdown,
+        recommendation = (
+            create_recommendation(
+                pub=pub,
+                score=total_score,
+                matched_features=(
+                    matched_features
+                ),
+                missing_features=(
+                    missing_features
+                ),
+                score_breakdown=(
+                    score_breakdown
+                ),
+            )
         )
 
-        recommendations.append(recommendation)
+        recommendations.append(
+            recommendation
+        )
 
     recommendations.sort(
         key=lambda recommendation: (
             recommendation["score"],
             recommendation["rating"],
-            -recommendation["distance_minutes"],
+            -recommendation[
+                "distance_minutes"
+            ],
         ),
         reverse=True,
     )

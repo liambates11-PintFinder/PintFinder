@@ -5,36 +5,46 @@ from dataclasses import dataclass, field
 class Pub:
     """
     Represents a pub within PintFinder.
-
-    This model stores:
-    - Core recommendation data
-    - Google Places identifiers
-    - AI-generated personality data
-    - User-facing venue features
     """
 
-    # Core information
+    # Required core information
     name: str
     rating: float
     distance_minutes: int
 
-    # Google Places identifier
+    # Google identifiers and contact details
     place_id: str | None = None
+    address: str | None = None
+    website: str | None = None
+    phone_number: str | None = None
+    google_maps_url: str | None = None
+    price_level: str | None = None
+    open_now: bool | None = None
 
-    # AI enrichment
+    # Personality information
     personality: str = "Unclassified"
     personality_description: str = (
-        "AI enrichment coming soon."
+        "Personality enrichment coming soon."
     )
-    personality_tags: list[str] = field(default_factory=list)
+    personality_tags: list[str] = field(
+        default_factory=list
+    )
 
-    # Venue features
-    pool_table: bool = False
+    # Google-supported or partially supported features
+    football: bool = False
     sports_tv: bool = False
-    guinness: bool = False
     food: bool = False
-    beer_garden: bool = False
     cocktails: bool = False
     dog_friendly: bool = False
     live_music: bool = False
-    quiz: bool = False
+    beer_garden: bool = False
+    late_open: bool = False
+    serves_beer: bool = False
+
+    # Features requiring future custom enrichment
+    pool_table: bool = False
+    guinness: bool = False
+    family_friendly: bool = False
+    quiz_night: bool = False
+    darts: bool = False
+    craft_beer: bool = False

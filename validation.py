@@ -1,4 +1,19 @@
-# validation.py
+def get_feature_key(feature):
+    """
+    Extract the database attribute name from a feature definition.
+    """
+
+    if isinstance(feature, str):
+        return feature
+
+    if not isinstance(feature, dict):
+        return None
+
+    return (
+        feature.get("database_key")
+        or feature.get("key")
+        or feature.get("name")
+    )
 
 
 def validate_database(pubs, features):
@@ -17,16 +32,15 @@ def validate_database(pubs, features):
     }
 
     for feature in features:
-        if isinstance(feature, str):
-            required_fields.add(feature)
+        feature_key = get_feature_key(feature)
 
-        elif isinstance(feature, dict):
-            feature_name = feature.get("key") or feature.get("name")
+        if feature_key:
+            required_fields.add(feature_key)
 
-            if feature_name:
-                required_fields.add(feature_name)
-
-    for index, pub in enumerate(pubs, start=1):
+    for index, pub in enumerate(
+        pubs,
+        start=1,
+    ):
         missing_fields = {
             field_name
             for field_name in required_fields
@@ -34,11 +48,15 @@ def validate_database(pubs, features):
         }
 
         if missing_fields:
-            missing_list = ", ".join(sorted(missing_fields))
+            missing_list = ", ".join(
+                sorted(missing_fields)
+            )
 
             raise ValueError(
                 f"Pub #{index} is missing required fields: "
                 f"{missing_list}"
             )
 
-    print(f"\n✅ Validated {len(pubs)} pubs.")
+    print(
+        f"\n✅ Validated {len(pubs)} pubs."
+    )
