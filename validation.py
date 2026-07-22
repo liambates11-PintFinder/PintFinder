@@ -1,12 +1,13 @@
 # validation.py
 
+
 def validate_database(pubs, features):
     """
-    Checks that every pub contains all required keys.
-    Prints warnings instead of crashing if something is missing.
+    Validate that every Pub object contains all fields
+    required by PintFinder.
     """
 
-    required_keys = {
+    required_fields = {
         "name",
         "rating",
         "distance_minutes",
@@ -16,13 +17,28 @@ def validate_database(pubs, features):
     }
 
     for feature in features:
-        required_keys.add(feature["database_key"])
+        if isinstance(feature, str):
+            required_fields.add(feature)
 
-    for pub in pubs:
-        missing = required_keys - pub.keys()
+        elif isinstance(feature, dict):
+            feature_name = feature.get("key") or feature.get("name")
 
-        if missing:
-            print(
-                f"Warning: {pub['name']} is missing: "
-                + ", ".join(sorted(missing))
+            if feature_name:
+                required_fields.add(feature_name)
+
+    for index, pub in enumerate(pubs, start=1):
+        missing_fields = {
+            field_name
+            for field_name in required_fields
+            if not hasattr(pub, field_name)
+        }
+
+        if missing_fields:
+            missing_list = ", ".join(sorted(missing_fields))
+
+            raise ValueError(
+                f"Pub #{index} is missing required fields: "
+                f"{missing_list}"
             )
+
+    print(f"\n✅ Validated {len(pubs)} pubs.")

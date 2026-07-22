@@ -1,6 +1,6 @@
-# google_adapter.py
-
 from math import radians, sin, cos, sqrt, atan2
+
+from pub import Pub
 
 
 def calculate_distance_minutes(
@@ -11,10 +11,9 @@ def calculate_distance_minutes(
 ):
     """
     Approximate walking time using straight-line distance.
-    We'll replace this later with Google's walking directions API.
     """
 
-    R = 6371  # Earth's radius (km)
+    R = 6371
 
     dlat = radians(pub_lat - user_lat)
     dlng = radians(pub_lng - user_lng)
@@ -30,7 +29,6 @@ def calculate_distance_minutes(
 
     km = R * c
 
-    # Walking ≈ 12 minutes/km
     return round(km * 12)
 
 
@@ -40,7 +38,7 @@ def convert_google_pubs(
     user_lng,
 ):
     """
-    Convert Google Places into PintFinder format.
+    Convert Google Places results into Pub objects.
     """
 
     pubs = []
@@ -49,37 +47,20 @@ def convert_google_pubs(
 
         location = place.get("location", {})
 
-        pubs.append(
-            {
-                "name": place["displayName"]["text"],
-                "rating": place.get("rating", 0),
-
-                "distance_minutes": calculate_distance_minutes(
-                    user_lat,
-                    user_lng,
-                    location.get("latitude"),
-                    location.get("longitude"),
-                ),
-
-                # Temporary defaults
-                "personality": "traditional",
-
-                "personality_description":
-                    "Live Google pub (personality coming soon)",
-
-                "personality_tags": [],
-
-                # Default feature values
-                "pool_table": False,
-                "sports_tv": False,
-                "guinness": False,
-                "food": False,
-                "beer_garden": False,
-                "cocktails": False,
-                "dog_friendly": False,
-                "live_music": False,
-                "quiz": False,
-            }
+        pub = Pub(
+            name=place["displayName"]["text"],
+            rating=place.get("rating", 0),
+            distance_minutes=calculate_distance_minutes(
+                user_lat,
+                user_lng,
+                location.get("latitude"),
+                location.get("longitude"),
+            ),
+            personality="Traditional",
+            personality_description="Live Google pub (AI enrichment coming soon)",
+            personality_tags=[],
         )
+
+        pubs.append(pub)
 
     return pubs
