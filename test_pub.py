@@ -1,4 +1,4 @@
-from pub import Pub
+from models.pub import Pub
 
 pub = Pub(
     name="The Old Wellington",

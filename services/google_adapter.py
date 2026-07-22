@@ -1,6 +1,6 @@
 from math import radians, sin, cos, sqrt, atan2
 
-from pub import Pub
+from models.pub import Pub
 
 
 def calculate_distance_minutes(

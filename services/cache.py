@@ -5,7 +5,7 @@ import os
 from dataclasses import asdict
 from datetime import datetime, timedelta
 
-from pub import Pub
+from models.pub import Pub
 
 
 CACHE_FILE = "storage/cache.json"

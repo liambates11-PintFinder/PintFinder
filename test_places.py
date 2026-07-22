@@ -1,5 +1,5 @@
-from location import get_coordinates
-from places import get_nearby_pubs
+from services.location import get_coordinates
+from services.places import get_nearby_pubs
 
 location = input("Enter location: ")
 

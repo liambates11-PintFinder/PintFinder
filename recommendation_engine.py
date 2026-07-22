@@ -1,189 +1,261 @@
 # recommendation_engine.py
 
-
-def format_feature_name(feature):
-    """Convert a feature key into readable text."""
-    return feature.replace("_", " ").title()
+from typing import Any
 
 
-def build_comparison_explanation(pub, next_pub):
+MUST_MATCH_REWARD = 30
+MUST_MISS_PENALTY = 40
+
+NICE_MATCH_REWARD = 15
+NICE_MISS_PENALTY = 0
+
+RATING_MULTIPLIER = 5
+MAX_DISTANCE_SCORE = 20
+
+
+def get_preference_level(value: Any) -> str | None:
     """
-    Explain why one pub ranks above the pub immediately below it.
+    Convert different preference formats into a consistent level.
 
-    The explanation focuses on the score components that created
-    the largest differences between the two pubs.
+    Supported examples:
+        "must"
+        "nice"
+        "must_have"
+        "nice_to_have"
+        True
+        False
+        {"priority": "must"}
+        {"level": "nice"}
     """
 
-    if next_pub is None:
-        return "This is the final recommendation in the current shortlist."
-
-    advantages = []
-    disadvantages = []
-
-    pub_breakdown = pub.get("score_breakdown", {})
-    next_breakdown = next_pub.get("score_breakdown", {})
-
-    # Compare selected feature scores
-    feature_scores = pub_breakdown.get("features", {})
-    next_feature_scores = next_breakdown.get("features", {})
-
-    all_features = set(feature_scores) | set(next_feature_scores)
-
-    for feature in all_features:
-        difference = (
-            feature_scores.get(feature, 0)
-            - next_feature_scores.get(feature, 0)
+    if isinstance(value, dict):
+        value = (
+            value.get("priority")
+            or value.get("level")
+            or value.get("preference")
+            or value.get("importance")
         )
 
-        readable_feature = format_feature_name(feature)
+    if value is True:
+        return "nice"
 
-        if difference > 0:
-            advantages.append(
-                {
-                    "difference": difference,
-                    "text": (
-                        f"it performs better for your "
-                        f"{readable_feature} preference"
-                    ),
-                }
-            )
+    if value in (False, None, "", "no", "none"):
+        return None
 
-        elif difference < 0:
-            disadvantages.append(
-                {
-                    "difference": abs(difference),
-                    "text": (
-                        f"{next_pub.get('name', 'the next pub')} performs "
-                        f"better for {readable_feature}"
-                    ),
-                }
-            )
+    if not isinstance(value, str):
+        return None
 
-    # Compare personality score
-    personality_difference = (
-        pub_breakdown.get("personality", 0)
-        - next_breakdown.get("personality", 0)
+    normalized_value = (
+        value.strip()
+        .lower()
+        .replace("-", "_")
+        .replace(" ", "_")
     )
 
-    if personality_difference > 0:
-        advantages.append(
-            {
-                "difference": personality_difference,
-                "text": "it better matches the atmosphere for this occasion",
-            }
-        )
+    must_values = {
+        "must",
+        "must_have",
+        "essential",
+        "required",
+        "very_important",
+    }
 
-    elif personality_difference < 0:
-        disadvantages.append(
-            {
-                "difference": abs(personality_difference),
-                "text": (
-                    f"{next_pub.get('name', 'the next pub')} better matches "
-                    f"the atmosphere for this occasion"
-                ),
-            }
-        )
+    nice_values = {
+        "nice",
+        "nice_to_have",
+        "preferred",
+        "important",
+        "yes",
+    }
 
-    # Compare rating score
-    rating_difference = (
-        pub_breakdown.get("rating", 0)
-        - next_breakdown.get("rating", 0)
+    if normalized_value in must_values:
+        return "must"
+
+    if normalized_value in nice_values:
+        return "nice"
+
+    return None
+
+
+def extract_occasion_preferences(occasion: Any) -> dict:
+    """
+    Extract feature preferences from an occasion template.
+
+    The function is intentionally flexible so it can support occasion
+    dictionaries with keys such as:
+
+        preferences
+        feature_weights
+        features
+        recommended_features
+    """
+
+    if not isinstance(occasion, dict):
+        return {}
+
+    possible_keys = (
+        "preferences",
+        "feature_weights",
+        "features",
+        "recommended_features",
     )
 
-    if rating_difference > 0:
-        advantages.append(
-            {
-                "difference": rating_difference,
-                "text": (
-                    f"it has the stronger rating "
-                    f"({pub.get('rating', 'unknown')} versus "
-                    f"{next_pub.get('rating', 'unknown')})"
-                ),
-            }
+    for key in possible_keys:
+        occasion_preferences = occasion.get(key)
+
+        if isinstance(occasion_preferences, dict):
+            return occasion_preferences
+
+    return {}
+
+
+def combine_preferences(
+    occasion: Any,
+    user_preferences: Any,
+) -> dict:
+    """
+    Combine occasion defaults with the user's selected preferences.
+
+    User selections take priority over occasion defaults.
+    """
+
+    combined_preferences = extract_occasion_preferences(occasion)
+
+    if isinstance(user_preferences, dict):
+        combined_preferences.update(user_preferences)
+
+    return combined_preferences
+
+
+def calculate_rating_score(rating: Any) -> float:
+    """
+    Convert a Google rating into recommendation points.
+    """
+
+    if not isinstance(rating, (int, float)):
+        return 0
+
+    bounded_rating = max(0, min(float(rating), 5))
+
+    return round(bounded_rating * RATING_MULTIPLIER, 2)
+
+
+def calculate_distance_score(
+    distance_minutes: Any,
+    maximum_distance: Any,
+) -> float:
+    """
+    Award more points to closer pubs.
+
+    A pub at zero minutes receives the maximum distance score.
+    A pub at the user's maximum distance receives zero distance points.
+    """
+
+    if not isinstance(distance_minutes, (int, float)):
+        return 0
+
+    if not isinstance(maximum_distance, (int, float)):
+        return 0
+
+    if maximum_distance <= 0:
+        return 0
+
+    if distance_minutes > maximum_distance:
+        return 0
+
+    distance_ratio = distance_minutes / maximum_distance
+
+    score = MAX_DISTANCE_SCORE * (1 - distance_ratio)
+
+    return round(max(score, 0), 2)
+
+
+def score_feature_preferences(
+    pub: Any,
+    preferences: dict,
+) -> tuple[float, list, list, dict]:
+    """
+    Score a pub against the selected feature preferences.
+
+    Returns:
+        feature_score
+        matched_features
+        missing_features
+        feature_breakdown
+    """
+
+    feature_score = 0
+    matched_features = []
+    missing_features = []
+    feature_breakdown = {}
+
+    for feature_name, preference_value in preferences.items():
+        preference_level = get_preference_level(preference_value)
+
+        if preference_level is None:
+            continue
+
+        pub_has_feature = bool(
+            getattr(pub, feature_name, False)
         )
 
-    elif rating_difference < 0:
-        disadvantages.append(
-            {
-                "difference": abs(rating_difference),
-                "text": (
-                    f"{next_pub.get('name', 'the next pub')} has the stronger "
-                    f"rating ({next_pub.get('rating', 'unknown')} versus "
-                    f"{pub.get('rating', 'unknown')})"
-                ),
-            }
-        )
+        if preference_level == "must":
+            if pub_has_feature:
+                points = MUST_MATCH_REWARD
+                matched_features.append(feature_name)
+            else:
+                points = -MUST_MISS_PENALTY
+                missing_features.append(feature_name)
 
-    # Compare distance score
-    distance_difference = (
-        pub_breakdown.get("distance", 0)
-        - next_breakdown.get("distance", 0)
+        else:
+            if pub_has_feature:
+                points = NICE_MATCH_REWARD
+                matched_features.append(feature_name)
+            else:
+                points = -NICE_MISS_PENALTY
+                missing_features.append(feature_name)
+
+        feature_score += points
+
+        feature_breakdown[feature_name] = {
+            "preference": preference_level,
+            "matched": pub_has_feature,
+            "points": points,
+        }
+
+    return (
+        feature_score,
+        matched_features,
+        missing_features,
+        feature_breakdown,
     )
 
-    if distance_difference > 0:
-        advantages.append(
-            {
-                "difference": distance_difference,
-                "text": (
-                    f"it is closer "
-                    f"({pub.get('distance_minutes', 'unknown')} minutes versus "
-                    f"{next_pub.get('distance_minutes', 'unknown')} minutes)"
-                ),
-            }
-        )
 
-    elif distance_difference < 0:
-        disadvantages.append(
-            {
-                "difference": abs(distance_difference),
-                "text": (
-                    f"{next_pub.get('name', 'the next pub')} is closer "
-                    f"({next_pub.get('distance_minutes', 'unknown')} minutes "
-                    f"versus {pub.get('distance_minutes', 'unknown')} minutes)"
-                ),
-            }
-        )
+def create_recommendation(
+    pub: Any,
+    score: float,
+    matched_features: list,
+    missing_features: list,
+    score_breakdown: dict,
+) -> dict:
+    """
+    Convert a Pub object into the recommendation dictionary expected
+    by the display layer.
+    """
 
-    # Show the most important differences first
-    advantages.sort(
-        key=lambda item: item["difference"],
-        reverse=True,
-    )
-
-    disadvantages.sort(
-        key=lambda item: item["difference"],
-        reverse=True,
-    )
-
-    score_gap = pub.get("score", 0) - next_pub.get("score", 0)
-    next_pub_name = next_pub.get("name", "the next recommendation")
-
-    if not advantages:
-        return (
-            f"It is only narrowly above {next_pub_name}, with a score gap of "
-            f"{score_gap:.1f} points. Their scores are otherwise very similar."
-        )
-
-    main_advantages = [item["text"] for item in advantages[:2]]
-
-    if len(main_advantages) == 1:
-        advantage_text = main_advantages[0]
-    else:
-        advantage_text = (
-            f"{main_advantages[0]} and {main_advantages[1]}"
-        )
-
-    explanation = (
-        f"It ranks {score_gap:.1f} points above {next_pub_name} mainly because "
-        f"{advantage_text}."
-    )
-
-    if disadvantages:
-        explanation += (
-            f" However, {disadvantages[0]['text']}."
-        )
-
-    return explanation
+    return {
+        "pub": pub,
+        "name": pub.name,
+        "rating": pub.rating,
+        "distance_minutes": pub.distance_minutes,
+        "personality": pub.personality,
+        "personality_description": pub.personality_description,
+        "personality_tags": list(pub.personality_tags),
+        "score": round(score, 2),
+        "matched_features": matched_features,
+        "missing_features": missing_features,
+        "score_breakdown": score_breakdown,
+    }
 
 
 def calculate_recommendations(
@@ -193,110 +265,87 @@ def calculate_recommendations(
     maximum_distance,
 ):
     """
-    Score pubs, rank them and explain why each pub is above the next one.
+    Calculate and rank PintFinder recommendations.
+
+    Scoring currently considers:
+
+    - Google rating
+    - Distance
+    - Must-have preferences
+    - Nice-to-have preferences
+
+    Pubs outside the user's maximum distance are excluded.
+    Missing must-have features receive a large penalty rather than
+    automatically removing the pub.
     """
+
+    combined_preferences = combine_preferences(
+        occasion,
+        preferences,
+    )
 
     recommendations = []
 
-    preferred_personalities = occasion.get(
-        "preferred_personalities",
-        [],
-    )
-
     for pub in pubs:
+        distance_minutes = pub.distance_minutes
 
-        distance_minutes = pub.get("distance_minutes")
-
-        # Skip pubs with no usable distance data
-        if distance_minutes is None:
+        if (
+            isinstance(maximum_distance, (int, float))
+            and maximum_distance > 0
+            and distance_minutes > maximum_distance
+        ):
             continue
 
-        # Filter pubs outside the chosen walking distance
-        if distance_minutes > maximum_distance:
-            continue
-
-        score = 0
-        matched_features = []
-        missing_features = []
-        feature_breakdown = {}
-
-        # Score the user's selected preferences
-        for feature, importance in preferences.items():
-
-            if importance == "dont_care":
-                continue
-
-            has_feature = pub.get(feature, False)
-            feature_score = 0
-
-            if importance == "must":
-
-                if has_feature:
-                    feature_score = 30
-                    matched_features.append(feature)
-                else:
-                    feature_score = -40
-                    missing_features.append(feature)
-
-            elif importance == "nice":
-
-                if has_feature:
-                    feature_score = 15
-                    matched_features.append(feature)
-
-            score += feature_score
-            feature_breakdown[feature] = feature_score
-
-        # Personality score
-        personality = pub.get("personality")
-        personality_score = 0
-
-        if personality in preferred_personalities:
-            personality_score = 20
-            score += personality_score
-
-        # Rating score
-        rating = pub.get("rating", 0)
-        rating_score = rating * 5
-        score += rating_score
-
-        # Distance score
-        distance_score = max(0, 20 - distance_minutes)
-        score += distance_score
-
-        recommendations.append(
-            {
-                **pub,
-                "score": score,
-                "matched_features": matched_features,
-                "missing_features": missing_features,
-                "score_breakdown": {
-                    "features": feature_breakdown,
-                    "personality": personality_score,
-                    "rating": rating_score,
-                    "distance": distance_score,
-                },
-            }
+        rating_score = calculate_rating_score(
+            pub.rating
         )
+
+        distance_score = calculate_distance_score(
+            distance_minutes,
+            maximum_distance,
+        )
+
+        (
+            feature_score,
+            matched_features,
+            missing_features,
+            feature_breakdown,
+        ) = score_feature_preferences(
+            pub,
+            combined_preferences,
+        )
+
+        total_score = (
+            rating_score
+            + distance_score
+            + feature_score
+        )
+
+        score_breakdown = {
+            "rating": rating_score,
+            "distance": distance_score,
+            "features": feature_score,
+            "feature_details": feature_breakdown,
+            "total": round(total_score, 2),
+        }
+
+        recommendation = create_recommendation(
+            pub=pub,
+            score=total_score,
+            matched_features=matched_features,
+            missing_features=missing_features,
+            score_breakdown=score_breakdown,
+        )
+
+        recommendations.append(recommendation)
 
     recommendations.sort(
-        key=lambda pub: pub.get("score", 0),
+        key=lambda recommendation: (
+            recommendation["score"],
+            recommendation["rating"],
+            -recommendation["distance_minutes"],
+        ),
         reverse=True,
     )
-
-    # Add ranking position and a direct comparison with the next pub
-    for index, pub in enumerate(recommendations):
-
-        pub["rank"] = index + 1
-
-        next_pub = None
-
-        if index + 1 < len(recommendations):
-            next_pub = recommendations[index + 1]
-
-        pub["ranking_explanation"] = build_comparison_explanation(
-            pub,
-            next_pub,
-        )
 
     return recommendations

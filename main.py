@@ -15,11 +15,11 @@ from display import (
     display_search_summary,
 )
 
-from location import get_coordinates
-from places import get_nearby_pubs
-from google_adapter import convert_google_pubs
+from services.location import get_coordinates
+from services.places import get_nearby_pubs
+from services.google_adapter import convert_google_pubs
 
-from cache import (
+from services.cache import (
     get_cached_results,
     save_results,
 )

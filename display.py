@@ -1,9 +1,24 @@
 # display.py
 
 
-def format_readable_text(value):
-    """Convert stored values into readable text."""
-    return str(value).replace("_", " ").title()
+def format_feature_name(feature_name):
+    """
+    Convert an internal feature name into readable text.
+
+    Example:
+        pool_table -> Pool table
+        sports_tv -> Sports TV
+    """
+
+    special_labels = {
+        "sports_tv": "Sports TV",
+        "guinness": "Guinness",
+    }
+
+    if feature_name in special_labels:
+        return special_labels[feature_name]
+
+    return feature_name.replace("_", " ").capitalize()
 
 
 def display_search_summary(
@@ -11,173 +26,253 @@ def display_search_summary(
     preferences,
     maximum_distance,
 ):
+    """
+    Display the user's search choices before showing results.
+    """
+
     print("\n" + "=" * 50)
-    print("SEARCH SUMMARY")
+    print("🔎 YOUR SEARCH")
     print("=" * 50)
 
-    print(f"Occasion: {occasion.get('name', 'Not specified')}")
-    print(f"Maximum distance: {maximum_distance} minutes\n")
-
-    print("Preferences:")
-
-    active_preferences = False
-
-    for feature, importance in preferences.items():
-
-        if importance == "must":
-            label = "Must have"
-            active_preferences = True
-
-        elif importance == "nice":
-            label = "Nice to have"
-            active_preferences = True
-
-        else:
-            label = "Don't care"
-
-        print(
-            f"• {format_readable_text(feature)}: {label}"
+    if isinstance(occasion, dict):
+        occasion_name = (
+            occasion.get("name")
+            or occasion.get("label")
+            or occasion.get("title")
+            or "Custom occasion"
         )
+    else:
+        occasion_name = str(occasion)
 
-    if not active_preferences:
-        print(
-            "\nNo specific features selected. Rankings will mainly be based "
-            "on rating, distance and suitability for the occasion."
-        )
+    print(f"Occasion: {occasion_name}")
+    print(f"Maximum distance: {maximum_distance} minutes")
 
-    print("=" * 50)
+    selected_preferences = []
+
+    if isinstance(preferences, dict):
+        for feature_name, preference_value in preferences.items():
+            if preference_value in (None, False, "", "none", "no"):
+                continue
+
+            readable_feature = format_feature_name(feature_name)
+
+            if isinstance(preference_value, dict):
+                preference_level = (
+                    preference_value.get("priority")
+                    or preference_value.get("level")
+                    or preference_value.get("importance")
+                    or "selected"
+                )
+            else:
+                preference_level = str(preference_value)
+
+            selected_preferences.append(
+                f"{readable_feature}: {preference_level}"
+            )
+
+    if selected_preferences:
+        print("\nPreferences:")
+
+        for preference in selected_preferences:
+            print(f"  • {preference}")
+    else:
+        print("\nPreferences: None selected")
 
 
-def display_score_breakdown(pub):
-    """Show exactly how the pub's score was calculated."""
+def display_score_breakdown(recommendation):
+    """
+    Display the points contributing to a recommendation's score.
+    """
 
-    breakdown = pub.get("score_breakdown", {})
-    feature_scores = breakdown.get("features", {})
+    score_breakdown = recommendation.get(
+        "score_breakdown",
+        {},
+    )
+
+    rating_score = score_breakdown.get("rating", 0)
+    distance_score = score_breakdown.get("distance", 0)
+    feature_score = score_breakdown.get("features", 0)
 
     print("\nScore breakdown:")
+    print(f"  Rating: {rating_score:+.2f}")
+    print(f"  Distance: {distance_score:+.2f}")
+    print(f"  Preferences: {feature_score:+.2f}")
 
-    for feature, points in feature_scores.items():
+    feature_details = score_breakdown.get(
+        "feature_details",
+        {},
+    )
 
-        sign = "+" if points >= 0 else ""
+    if feature_details:
+        print("\nPreference details:")
 
-        print(
-            f"  {format_readable_text(feature)}: "
-            f"{sign}{points:.1f}"
+        for feature_name, details in feature_details.items():
+            readable_feature = format_feature_name(feature_name)
+
+            if not isinstance(details, dict):
+                continue
+
+            preference_level = details.get(
+                "preference",
+                "selected",
+            )
+
+            matched = details.get(
+                "matched",
+                False,
+            )
+
+            points = details.get(
+                "points",
+                0,
+            )
+
+            symbol = "✓" if matched else "✗"
+
+            print(
+                f"  {symbol} {readable_feature} "
+                f"({preference_level}): "
+                f"{points:+}"
+            )
+
+
+def display_match_summary(recommendation):
+    """
+    Display features that matched or were missing.
+    """
+
+    matched_features = recommendation.get(
+        "matched_features",
+        [],
+    )
+
+    missing_features = recommendation.get(
+        "missing_features",
+        [],
+    )
+
+    if matched_features:
+        print("\nMatches:")
+
+        for feature_name in matched_features:
+            print(
+                f"  ✓ {format_feature_name(feature_name)}"
+            )
+
+    if missing_features:
+        print("\nMissing preferences:")
+
+        for feature_name in missing_features:
+            print(
+                f"  ✗ {format_feature_name(feature_name)}"
+            )
+
+
+def display_personality(recommendation):
+    """
+    Display personality information for a pub.
+    """
+
+    personality = recommendation.get(
+        "personality",
+        "Unknown",
+    )
+
+    description = recommendation.get(
+        "personality_description",
+        "",
+    )
+
+    personality_tags = recommendation.get(
+        "personality_tags",
+        [],
+    )
+
+    print(f"Personality: {personality}")
+
+    if description:
+        print(description)
+
+    if personality_tags:
+        readable_tags = ", ".join(
+            str(tag)
+            for tag in personality_tags
         )
 
-    personality_points = breakdown.get("personality", 0)
-    rating_points = breakdown.get("rating", 0)
-    distance_points = breakdown.get("distance", 0)
+        print(f"Tags: {readable_tags}")
 
-    print(
-        f"  Occasion atmosphere: "
-        f"+{personality_points:.1f}"
+
+def display_single_result(
+    recommendation,
+    position,
+):
+    """
+    Display one ranked pub recommendation.
+    """
+
+    name = recommendation.get(
+        "name",
+        "Unknown pub",
     )
 
-    print(
-        f"  Rating: "
-        f"+{rating_points:.1f}"
+    rating = recommendation.get(
+        "rating",
+        0,
     )
 
-    print(
-        f"  Distance: "
-        f"+{distance_points:.1f}"
+    distance_minutes = recommendation.get(
+        "distance_minutes",
+        "Unknown",
     )
 
+    score = recommendation.get(
+        "score",
+        0,
+    )
 
-def display_results(results):
+    print("\n" + "-" * 50)
+    print(f"#{position} — {name}")
+    print("-" * 50)
 
-    print("\n🏆 Top Recommendations\n")
+    print(f"Rating: {rating}")
+    print(f"Distance: {distance_minutes} minutes")
+    print(f"Recommendation score: {score:.2f}")
 
-    if not results:
-        print("No pubs were found within your selected distance.")
+    display_personality(recommendation)
+    display_match_summary(recommendation)
+    display_score_breakdown(recommendation)
+
+
+def display_results(
+    recommendations,
+    maximum_results=3,
+):
+    """
+    Display the highest-ranked pub recommendations.
+    """
+
+    print("\n" + "=" * 50)
+    print("🍺 YOUR PINTFINDER RECOMMENDATIONS")
+    print("=" * 50)
+
+    if not recommendations:
+        print(
+            "\nNo pubs matched your search distance. "
+            "Try increasing the maximum distance."
+        )
         return
 
-    medals = ["🥇", "🥈", "🥉"]
+    results_to_display = recommendations[
+        :maximum_results
+    ]
 
-    for index, pub in enumerate(results[:3]):
-
-        position = index + 1
-
-        if index < len(medals):
-            ranking_label = medals[index]
-        else:
-            ranking_label = f"#{position}"
-
-        print("=" * 60)
-        print(
-            f"{ranking_label} #{position}: "
-            f"{pub.get('name', 'Unknown pub')}"
-        )
-        print("=" * 60)
-
-        print(
-            f"⭐ Rating: {pub.get('rating', 'Not available')}"
+    for position, recommendation in enumerate(
+        results_to_display,
+        start=1,
+    ):
+        display_single_result(
+            recommendation,
+            position,
         )
 
-        print(
-            f"🚶 {pub.get('distance_minutes', 'Unknown')} mins away"
-        )
-
-        print(
-            f"🍺 Personality: "
-            f"{format_readable_text(pub.get('personality', 'unknown'))}"
-        )
-
-        personality_description = pub.get(
-            "personality_description",
-            "",
-        )
-
-        if personality_description:
-            print(personality_description)
-
-        personality_tags = pub.get("personality_tags", [])
-
-        if personality_tags:
-            print("\nTags:")
-
-            for tag in personality_tags:
-                print(
-                    f"  • {format_readable_text(tag)}"
-                )
-
-        print(
-            f"\nMatch Score: {pub.get('score', 0):.1f}"
-        )
-
-        print(f"\n💡 Why it is #{position}:")
-
-        print(
-            f"  {pub.get('ranking_explanation', 'No comparison available.')}"
-        )
-
-        matched_features = pub.get(
-            "matched_features",
-            [],
-        )
-
-        if matched_features:
-            print("\n✅ Your preferences it meets:")
-
-            for feature in matched_features:
-                print(
-                    f"  • {format_readable_text(feature)}"
-                )
-
-        missing_features = pub.get(
-            "missing_features",
-            [],
-        )
-
-        if missing_features:
-            print("\n❌ Must-have preferences it misses:")
-
-            for feature in missing_features:
-                print(
-                    f"  • {format_readable_text(feature)}"
-                )
-
-        display_score_breakdown(pub)
-
-        print()
+    print("\n" + "=" * 50)

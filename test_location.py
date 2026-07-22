@@ -1,4 +1,4 @@
-from location import get_coordinates
+from services.location import get_coordinates
 
 location = input("Enter a postcode or town: ")
 
