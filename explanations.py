@@ -42,6 +42,7 @@ def build_intro(matched):
 
     intro_starts = [
         "Perfect",
+        "Perfect",
         "Ideal",
         "A great choice",
         "An excellent option",
@@ -50,7 +51,7 @@ def build_intro(matched):
     intro = random.choice(intro_starts)
 
     if not activities:
-        return "A solid nearby option."
+        return "A great nearby option."
 
     if len(activities) == 1:
         return (
