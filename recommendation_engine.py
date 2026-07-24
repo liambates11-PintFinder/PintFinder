@@ -271,7 +271,26 @@ def score_feature_preferences(
         missing_features,
         feature_breakdown,
     )
+def score_review_preferences(
+    pub,
+    combined_preferences,
+):
+    """
+    Scores a pub using review intelligence.
 
+    This will eventually use extracted Google review signals
+    such as:
+    - Great Guinness
+    - Hidden Gem
+    - Proper Local
+    - Sunday Roast
+    - Friendly Staff
+    """
+
+    review_score = 0
+    review_breakdown = {}
+
+    return review_score, review_breakdown
 
 def create_recommendation(
     pub: Any,
@@ -481,8 +500,7 @@ def calculate_recommendations(
                 distance_minutes,
                 (int, float),
             )
-            and distance_minutes
-            > maximum_distance
+            and distance_minutes > maximum_distance
         ):
             continue
 
@@ -494,11 +512,9 @@ def calculate_recommendations(
             )
         )
 
-        distance_score = (
-            calculate_distance_score(
-                distance_minutes,
-                maximum_distance,
-            )
+        distance_score = calculate_distance_score(
+            distance_minutes,
+            maximum_distance,
         )
 
         (
@@ -510,72 +526,44 @@ def calculate_recommendations(
             pub,
             combined_preferences,
         )
+
         (
-    review_score,
-    review_breakdown,
-) = score_review_preferences(
-    pub,
-    combined_preferences,
-)
-def score_review_preferences(
-    pub,
-    combined_preferences,
-):
-    """
-    Scores a pub using review intelligence.
+            review_score,
+            review_breakdown,
+        ) = score_review_preferences(
+            pub,
+            combined_preferences,
+        )
 
-    This will eventually use extracted Google review signals
-    such as:
-    - Great Guinness
-    - Hidden Gem
-    - Proper Local
-    - Sunday Roast
-    - Friendly Staff
-    """
+        total_score = (
+            rating_score
+            + distance_score
+            + feature_score
+            + review_score
+        )
 
-    review_score = 0
-    review_breakdown = {}
-
-    return review_score, review_breakdown
-    total_score = (
-    rating_score
-    + distance_score
-    + feature_score
-    + review_score
-)
-
-    score_breakdown = {
+        score_breakdown = {
             "rating": rating_score,
             "distance": distance_score,
             "features": feature_score,
             "feature_details": feature_breakdown,
-
             "reviews": review_score,
-            "review_details": review_breakdowm,
-            
+            "review_details": review_breakdown,
             "total": round(
                 total_score,
                 2,
             ),
         }
 
-    recommendation = (
-            create_recommendation(
-                pub=pub,
-                score=total_score,
-                matched_features=(
-                    matched_features
-                ),
-                missing_features=(
-                    missing_features
-                ),
-                score_breakdown=(
-                    score_breakdown
-                ),
-            )
+        recommendation = create_recommendation(
+            pub=pub,
+            score=total_score,
+            matched_features=matched_features,
+            missing_features=missing_features,
+            score_breakdown=score_breakdown,
         )
 
-    recommendations.append(
+        recommendations.append(
             recommendation
         )
 
@@ -583,9 +571,7 @@ def score_review_preferences(
         key=lambda recommendation: (
             recommendation["score"],
             recommendation["rating"],
-            -recommendation[
-                "distance_minutes"
-            ],
+            -recommendation["distance_minutes"],
         ),
         reverse=True,
     )
