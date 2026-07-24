@@ -1,3 +1,4 @@
+import traceback
 from display import (
     display_results,
     display_search_summary,
@@ -159,15 +160,11 @@ def main():
             recommendations,
         )
 
-    except Exception as error:
-        print(
-            "\n❌ PintFinder could not complete "
-            "the search."
-        )
 
-        print(
-            f"Reason: {error}"
-        )
+    except Exception as error:
+        print("\n❌ PintFinder could not complete the search.")
+        traceback.print_exc()
+        print(f"\nReason: {error}")
 
 
 if __name__ == "__main__":

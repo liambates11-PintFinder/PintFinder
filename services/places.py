@@ -1,7 +1,12 @@
+from utils.review_display import print_review_intelligence
+from pprint import pprint
 import os
 
 import requests
 from dotenv import load_dotenv
+
+from services.review_intelligence import analyse_reviews
+
 
 load_dotenv()
 
@@ -85,6 +90,7 @@ def get_nearby_pubs(
 
     return response_data.get("places", [])
 
+print("Calling Google Place Details...")
 
 def get_place_details(place_id):
     """
@@ -116,7 +122,8 @@ def get_place_details(place_id):
             "dineIn,"
             "currentOpeningHours,"
             "regularOpeningHours,"
-            "priceLevel"
+            "priceLevel,"
+            "reviews"
         ),
     }
 
@@ -125,10 +132,25 @@ def get_place_details(place_id):
         headers=headers,
         timeout=20,
     )
-
     response.raise_for_status()
 
-    return response.json()
+    data = response.json()
+
+    reviews = data.get("reviews", [])
+
+    data["review_intelligence"] = analyse_reviews(reviews)
+
+    pub_name = (
+    data.get("displayName", {})
+    .get("text", "Unknown Pub")
+)
+
+    print_review_intelligence(
+    pub_name,
+    data["review_intelligence"],
+)
+
+    return data
 
 
 def get_enriched_nearby_pubs(

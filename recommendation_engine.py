@@ -510,27 +510,56 @@ def calculate_recommendations(
             pub,
             combined_preferences,
         )
+        (
+    review_score,
+    review_breakdown,
+) = score_review_preferences(
+    pub,
+    combined_preferences,
+)
+def score_review_preferences(
+    pub,
+    combined_preferences,
+):
+    """
+    Scores a pub using review intelligence.
 
-        total_score = (
-            rating_score
-            + distance_score
-            + feature_score
-        )
+    This will eventually use extracted Google review signals
+    such as:
+    - Great Guinness
+    - Hidden Gem
+    - Proper Local
+    - Sunday Roast
+    - Friendly Staff
+    """
 
-        score_breakdown = {
+    review_score = 0
+    review_breakdown = {}
+
+    return review_score, review_breakdown
+    total_score = (
+    rating_score
+    + distance_score
+    + feature_score
+    + review_score
+)
+
+    score_breakdown = {
             "rating": rating_score,
             "distance": distance_score,
             "features": feature_score,
-            "feature_details": (
-                feature_breakdown
-            ),
+            "feature_details": feature_breakdown,
+
+            "reviews": review_score,
+            "review_details": review_breakdowm,
+            
             "total": round(
                 total_score,
                 2,
             ),
         }
 
-        recommendation = (
+    recommendation = (
             create_recommendation(
                 pub=pub,
                 score=total_score,
@@ -546,7 +575,7 @@ def calculate_recommendations(
             )
         )
 
-        recommendations.append(
+    recommendations.append(
             recommendation
         )
 
