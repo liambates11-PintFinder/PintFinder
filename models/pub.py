@@ -48,3 +48,8 @@ class Pub:
     quiz_night: bool = False
     darts: bool = False
     craft_beer: bool = False
+
+        # Structured signals extracted from venue reviews
+    review_intelligence: dict = field(
+        default_factory=dict
+    )

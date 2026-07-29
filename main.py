@@ -33,7 +33,7 @@ from validation import validate_database
 
 SEARCH_RADIUS_METRES = 1500
 MAXIMUM_GOOGLE_RESULTS = 20
-CACHE_VERSION = "v2_place_details"
+CACHE_VERSION = "v3_review_intelligence"
 
 
 def build_cache_key(location):

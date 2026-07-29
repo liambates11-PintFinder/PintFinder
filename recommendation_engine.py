@@ -287,9 +287,50 @@ def score_review_preferences(
     - Friendly Staff
     """
 
+    preference_mapping = {
+        "Craft Beer": "craft_beer",
+        "Food": "food",
+        "Beer Garden": "beer_garden",
+        "Traditional Pub": "traditional",
+        "Quiet": "quiet",
+        "Service": "service",
+    }
+
     review_score = 0
     review_breakdown = {}
 
+    review_data = getattr(pub, "review_intelligence", {})
+
+    for preference_name, importance in combined_preferences.items():
+
+        if importance == "dont_care":
+            continue
+
+        review_key = preference_mapping.get(preference_name)
+
+        if review_key is None:
+            continue
+
+        signal = review_data.get(review_key)
+
+        if not signal:
+            continue
+
+        confidence = signal.get("confidence", 0)
+
+        points = confidence / 20
+
+        if importance == "must":
+            points *= 2
+
+        review_score += points
+
+        review_breakdown[preference_name] = round(points, 1)
+
+        print(pub.name)
+        print(review_score)
+        print(review_breakdown)
+        print("-" * 40)
     return review_score, review_breakdown
 
 def create_recommendation(
@@ -534,6 +575,7 @@ def calculate_recommendations(
             pub,
             combined_preferences,
         )
+
 
         total_score = (
             rating_score
