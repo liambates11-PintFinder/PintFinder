@@ -42,14 +42,14 @@ class Pub:
     serves_beer: bool = False
 
     # Features requiring future custom enrichment
-    pool_table: bool = False
-    guinness: bool = False
-    family_friendly: bool = False
-    quiz_night: bool = False
-    darts: bool = False
-    craft_beer: bool = False
+    pool_table: bool | None = None
+    guinness: bool | None = None
+    family_friendly: bool | None = None
+    quiz_night: bool | None = None
+    darts: bool | None = None
+    craft_beer: bool | None = None
 
-        # Structured signals extracted from venue reviews
-    review_intelligence: dict = field(
-        default_factory=dict
-    )
+    # Structured signals extracted from venue reviews
+    review_intelligence: dict = field(default_factory=dict)
+    review_highlights: list = field(default_factory=list)
+

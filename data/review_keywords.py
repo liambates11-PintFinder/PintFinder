@@ -499,7 +499,7 @@ KEYWORDS = {
         {'phrase': 'party music', 'weight': 7, 'display': 'Dj', 'polarity': 'positive'},
     ],
 
-    'quiz': [
+    'quiz_night': [
         {'phrase': 'pub quiz', 'weight': 7, 'display': 'Quiz', 'polarity': 'positive'},
         {'phrase': 'quiz night', 'weight': 7, 'display': 'Quiz', 'polarity': 'positive'},
         {'phrase': 'weekly quiz', 'weight': 7, 'display': 'Quiz', 'polarity': 'positive'},
@@ -511,7 +511,7 @@ KEYWORDS = {
         {'phrase': 'general knowledge quiz', 'weight': 8, 'display': 'Quiz', 'polarity': 'positive'},
     ],
 
-    'pool': [
+    'pool_table': [
         {'phrase': 'pool table', 'weight': 7, 'display': 'Pool', 'polarity': 'positive'},
         {'phrase': 'pool tables', 'weight': 7, 'display': 'Pool', 'polarity': 'positive'},
         {'phrase': 'play pool', 'weight': 7, 'display': 'Pool', 'polarity': 'positive'},

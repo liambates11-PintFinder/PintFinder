@@ -88,6 +88,8 @@ def get_cached_results(cache_key):
     ]
 
 
+from dataclasses import asdict
+
 def save_results(cache_key, pubs):
     """
     Convert Pub objects into dictionaries and save them
@@ -98,10 +100,10 @@ def save_results(cache_key, pubs):
 
     cache[cache_key] = {
         "timestamp": datetime.now().isoformat(),
-        "pubs": [
-            asdict(pub)
-            for pub in pubs
-        ],
+        "pubs": [],
     }
+
+    for pub in pubs:
+        cache[cache_key]["pubs"].append(asdict(pub))
 
     save_cache(cache)

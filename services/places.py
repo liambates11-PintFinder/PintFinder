@@ -92,6 +92,37 @@ def get_nearby_pubs(
 
 print("Calling Google Place Details...")
 
+REVIEW_FEATURES = [
+    "pool_table",
+    "guinness",
+    "family_friendly",
+    "quiz_night",
+    "darts",
+    "craft_beer",
+]
+
+
+def enrich_features_from_reviews(data):
+    """
+    Fill missing venue features using review intelligence.
+    """
+
+    review_data = data.get("review_intelligence", {})
+
+    for feature in REVIEW_FEATURES:
+
+        # Skip if reviews didn't mention it
+        if feature not in review_data:
+            continue
+
+        confidence = review_data[feature]["confidence"]
+
+        # Require reasonable confidence
+        if confidence >= 25:
+            data[feature] = True
+
+    return data
+
 def get_place_details(place_id):
     """
     Retrieve details and supported venue features
@@ -139,6 +170,8 @@ def get_place_details(place_id):
     reviews = data.get("reviews", [])
 
     data["review_intelligence"] = analyse_reviews(reviews)
+
+    data = enrich_features_from_reviews(data)
 
     pub_name = (
     data.get("displayName", {})

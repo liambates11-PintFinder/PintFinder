@@ -75,7 +75,7 @@ def build_intro(matched):
 
 
 
-def generate_recommendation_summary(recommendation):
+def generate_basic_summary(recommendation):
     """
     Generate a short explanation describing why this pub
     was recommended.

@@ -1,4 +1,4 @@
-from explanations import generate_recommendation_summary
+from explanations import generate_basic_summary
 def format_feature_name(feature_name):
     """
     Convert an internal feature name into readable text.
@@ -253,6 +253,16 @@ def display_score_breakdown(recommendation):
         f"{breakdown.get('features', 0):+6.0f}"
     )
 
+    print(
+    f" 🧠 Review Intelligence "
+    f"{breakdown.get('reviews', 0):+6.0f}"
+    )
+
+    if breakdown.get("review_details"):
+        for preference, points in breakdown["review_details"].items():
+            print(f"    • {preference:<18} +{points}")
+    
+
     print("\n" + "─" * 30)
 
     print(
@@ -293,8 +303,9 @@ def display_single_result(
     print("\n💡 Why PintFinder recommends this\n")
 
     print(
-        generate_recommendation_summary
-            (recommendation
+        recommendation.get(
+            "recommendation_summary",
+            ""
         )
     )
 
@@ -314,10 +325,33 @@ def display_single_result(
         recommendation
     )
 
-    display_score_breakdown(
+    display_review_highlights(
         recommendation
     )
 
+    display_score_breakdown(
+        recommendation
+    )
+def display_review_highlights(
+    recommendation,
+):
+    """
+    Display the top insights extracted
+    from customer reviews.
+    """
+
+    highlights = recommendation.get(
+        "review_highlights",
+        [],
+    )
+
+    if not highlights:
+        return
+
+    print("\n⭐ Why locals love it\n")
+
+    for highlight in highlights:
+        print(f" • {highlight}")
 
 def display_results(
     recommendations,

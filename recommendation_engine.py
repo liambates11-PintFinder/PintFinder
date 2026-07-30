@@ -1,6 +1,25 @@
 from personality_engine import classify_pub
 from typing import Any
+from services.recommendation_summary import (
+    generate_recommendation_summary,
+)
 
+
+REVIEW_KEY_MAP = {
+    "late_open": "late_night",
+    "beer_garden": "beer_garden",
+    "guinness": "guinness",
+    "food": "food",
+    "football": "football",
+    "live_music": "live_music",
+    "craft_beer": "craft_beer",
+    "family_friendly": "family_friendly",
+    "dog_friendly": "dog_friendly",
+    "cocktails": "cocktails",
+    "pool_table": "pool_table",
+    "quiz_night": "quiz_night",
+    "darts": "darts",
+}
 
 MUST_MATCH_REWARD = 30
 MUST_MISS_PENALTY = 40
@@ -209,56 +228,38 @@ def score_feature_preferences(
     missing_features = []
     feature_breakdown = {}
 
-    for (
-        feature_name,
-        preference_value,
-    ) in preferences.items():
-        preference_level = get_preference_level(
-            preference_value
-        )
+    for feature_name, preference_value in preferences.items():
+
+        preference_level = get_preference_level(preference_value)
 
         if preference_level is None:
             continue
 
-        pub_feature_value = getattr(
-            pub,
-            feature_name,
-            None,
-        )
+        pub_feature_value = getattr(pub, feature_name, None)
 
-        pub_has_feature = (
-            pub_feature_value is True
-        )
+        pub_has_feature = pub_feature_value is True
 
         if preference_level == "must":
+
             if pub_has_feature:
                 points = MUST_MATCH_REWARD
-                matched_features.append(
-                    feature_name
-                )
+                matched_features.append(feature_name)
             else:
                 points = -MUST_MISS_PENALTY
-                missing_features.append(
-                    feature_name
-                )
+                missing_features.append(feature_name)
 
         else:
+
             if pub_has_feature:
                 points = NICE_MATCH_REWARD
-                matched_features.append(
-                    feature_name
-                )
+                matched_features.append(feature_name)
             else:
                 points = -NICE_MISS_PENALTY
-                missing_features.append(
-                    feature_name
-                )
+                missing_features.append(feature_name)
 
         feature_score += points
 
-        feature_breakdown[
-            feature_name
-        ] = {
+        feature_breakdown[feature_name] = {
             "preference": preference_level,
             "value": pub_feature_value,
             "matched": pub_has_feature,
@@ -271,67 +272,62 @@ def score_feature_preferences(
         missing_features,
         feature_breakdown,
     )
+
+
 def score_review_preferences(
     pub,
     combined_preferences,
 ):
     """
-    Scores a pub using review intelligence.
-
-    This will eventually use extracted Google review signals
-    such as:
-    - Great Guinness
-    - Hidden Gem
-    - Proper Local
-    - Sunday Roast
-    - Friendly Staff
+    Score a pub using review intelligence.
     """
-
-    preference_mapping = {
-        "Craft Beer": "craft_beer",
-        "Food": "food",
-        "Beer Garden": "beer_garden",
-        "Traditional Pub": "traditional",
-        "Quiet": "quiet",
-        "Service": "service",
-    }
 
     review_score = 0
     review_breakdown = {}
+    matched_review_features = []
 
-    review_data = getattr(pub, "review_intelligence", {})
+    review_data = getattr(
+    pub,
+    "review_intelligence",
+    {},
+)
 
     for preference_name, importance in combined_preferences.items():
 
         if importance == "dont_care":
             continue
 
-        review_key = preference_mapping.get(preference_name)
+        review_key = REVIEW_KEY_MAP.get(
+        preference_name,
+        preference_name,
+    )
 
-        if review_key is None:
+        if review_key not in review_data:
             continue
 
-        signal = review_data.get(review_key)
+        confidence = review_data[review_key]["confidence"]
 
-        if not signal:
+        if confidence < 15:
             continue
 
-        confidence = signal.get("confidence", 0)
-
-        points = confidence / 20
+        points = round(confidence / 10)
 
         if importance == "must":
             points *= 2
 
         review_score += points
 
-        review_breakdown[preference_name] = round(points, 1)
+        review_breakdown[preference_name] = points
 
-        print(pub.name)
-        print(review_score)
-        print(review_breakdown)
-        print("-" * 40)
-    return review_score, review_breakdown
+        matched_review_features.append(
+            preference_name
+        )
+
+    return (
+    review_score,
+    review_breakdown,
+    matched_review_features,
+)
 
 def create_recommendation(
     pub: Any,
@@ -483,6 +479,18 @@ def create_recommendation(
 
 "personality_confidence": personality.confidence,
 
+        # Review highlights
+        "review_highlights": getattr(
+            pub,
+            "review_highlights",
+            [],
+        ),
+
+        "recommendation_summary": generate_recommendation_summary(
+            pub,
+            matched_features
+        ),
+
         # Recommendation results
         "matched_features": (
             matched_features
@@ -571,11 +579,18 @@ def calculate_recommendations(
         (
             review_score,
             review_breakdown,
+            matched_review_features,
         ) = score_review_preferences(
             pub,
             combined_preferences,
         )
 
+        for feature in matched_review_features:
+            if feature not in matched_features:
+                matched_features.append(feature)
+
+            if feature in missing_features:
+                missing_features.remove(feature)
 
         total_score = (
             rating_score

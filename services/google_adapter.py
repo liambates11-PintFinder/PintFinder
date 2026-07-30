@@ -1,3 +1,5 @@
+from services.review_intelligence import generate_review_highlights
+
 from math import atan2
 from math import cos
 from math import radians
@@ -231,13 +233,48 @@ def convert_google_pubs(
                 "servesBeer",
             ),
 
-            # Features Google does not currently confirm
-            pool_table=False,
-            guinness=False,
-            family_friendly=False,
-            quiz_night=False,
-            darts=False,
-            craft_beer=False,
+            # Features enriched from review intelligence
+            pool_table=place.get(
+                "pool_table",
+                None,
+            ),
+
+            guinness=place.get(
+                "guinness",
+                None,
+            ),
+
+            family_friendly=place.get(
+                "family_friendly",
+                None,
+            ),
+
+            quiz_night=place.get(
+                "quiz_night",
+                None,
+            ),
+
+            darts=place.get(
+                "darts",
+                None,
+            ),
+
+            craft_beer=place.get(
+                "craft_beer",
+                None,
+            ),
+
+            # PintFinder intelligence extracted from reviews
+            review_intelligence=place.get(
+                "review_intelligence",
+                {},
+            ),
+            review_highlights=generate_review_highlights(
+                place.get(
+                    "review_intelligence",
+                    {},
+                )
+            ),
         )
 
         pubs.append(pub)
