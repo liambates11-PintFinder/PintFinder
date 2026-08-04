@@ -21,14 +21,24 @@ REVIEW_KEY_MAP = {
     "darts": "darts",
 }
 
-MUST_MATCH_REWARD = 30
+ESSENTIAL_MATCH_REWARD = 100
+ESSENTIAL_MISS_PENALTY = 80
+
+MUST_MATCH_REWARD = 40
 MUST_MISS_PENALTY = 40
 
 NICE_MATCH_REWARD = 15
-NICE_MISS_PENALTY = 0
+NICE_MISS_PENALTY = 10
+
+
+MUST_MATCH_REWARD = 40
+MUST_MISS_PENALTY = 40
+
+NICE_MATCH_REWARD = 15
+NICE_MISS_PENALTY = 10
 
 RATING_MULTIPLIER = 5
-MAX_DISTANCE_SCORE = 20
+MAX_DISTANCE_SCORE = 10
 
 
 def get_preference_level(value: Any) -> str | None:
@@ -70,10 +80,13 @@ def get_preference_level(value: Any) -> str | None:
         .replace(" ", "_")
     )
 
+    essential_values = {
+        "essential",
+    }
+
     must_values = {
         "must",
         "must_have",
-        "essential",
         "required",
         "very_important",
     }
@@ -85,6 +98,9 @@ def get_preference_level(value: Any) -> str | None:
         "important",
         "yes",
     }
+
+    if normalized_value in essential_values:
+        return "essential"
 
     if normalized_value in must_values:
         return "must"
@@ -237,25 +253,55 @@ def score_feature_preferences(
 
         pub_feature_value = getattr(pub, feature_name, None)
 
-        pub_has_feature = pub_feature_value is True
+        confidence = getattr(
+            pub,
+            f"{feature_name}_confidence",
+            None,
+        )
 
-        if preference_level == "must":
+        if confidence is not None:
+            match_score = confidence / 100
+        else:
+            match_score = 1 if pub_feature_value is True else 0
 
-            if pub_has_feature:
-                points = MUST_MATCH_REWARD
-                matched_features.append(feature_name)
-            else:
-                points = -MUST_MISS_PENALTY
-                missing_features.append(feature_name)
+        pub_has_feature = match_score >= 0.5
+
+
+        if preference_level == "essential":
+
+            points = round(
+                (match_score * ESSENTIAL_MATCH_REWARD)
+                - ((1 - match_score) * ESSENTIAL_MISS_PENALTY)
+            )
+
+        elif preference_level == "must":
+
+            points = round(
+                (match_score * MUST_MATCH_REWARD)
+                - ((1 - match_score) * MUST_MISS_PENALTY)
+            )
 
         else:
 
-            if pub_has_feature:
-                points = NICE_MATCH_REWARD
-                matched_features.append(feature_name)
-            else:
-                points = -NICE_MISS_PENALTY
-                missing_features.append(feature_name)
+            points = round(
+                (match_score * NICE_MATCH_REWARD)
+                - ((1 - match_score) * NICE_MISS_PENALTY)
+            )
+
+        if pub_has_feature:
+            matched_features.append(feature_name)
+        else:
+            missing_features.append(feature_name)
+
+        print(
+            feature_name,
+            "| confidence:",
+            confidence,
+            "| match:",
+            round(match_score, 2),
+            "| points:",
+            points,
+        )
 
         feature_score += points
 
@@ -586,44 +632,92 @@ def calculate_recommendations(
         )
 
         for feature in matched_review_features:
-            if feature not in matched_features:
-                matched_features.append(feature)
+                preference_level = get_preference_level(
+                    combined_preferences.get(feature)
+                )
 
-            if feature in missing_features:
-                missing_features.remove(feature)
+                if preference_level is None:
+                    continue
+
+                if feature not in matched_features:
+                    matched_features.append(feature)
+
+                if feature in missing_features:
+                    missing_features.remove(feature)
+
+                previous_points = (
+                    feature_breakdown
+                    .get(feature, {})
+                    .get("points", 0)
+                )
+
+                if preference_level == "essential":
+                    corrected_points = ESSENTIAL_MATCH_REWARD
+
+                elif preference_level == "must":
+                    corrected_points = MUST_MATCH_REWARD
+
+                else:
+                    corrected_points = NICE_MATCH_REWARD
+
+                feature_score += (
+                    corrected_points
+                    - previous_points
+                )
+
+                feature_breakdown[feature] = {
+                "preference": preference_level,
+                "value": True,
+                "matched": True,
+                "source": "reviews",
+                "points": corrected_points,
+            }
 
         total_score = (
-            rating_score
-            + distance_score
-            + feature_score
-            + review_score
+                rating_score
+                + distance_score
+                + feature_score
+                + review_score
         )
 
         score_breakdown = {
-            "rating": rating_score,
-            "distance": distance_score,
-            "features": feature_score,
-            "feature_details": feature_breakdown,
-            "reviews": review_score,
-            "review_details": review_breakdown,
-            "total": round(
-                total_score,
-                2,
-            ),
+                "rating": rating_score,
+                "distance": distance_score,
+                "features": feature_score,
+                "feature_details": feature_breakdown,
+                "reviews": review_score,
+                "review_details": review_breakdown,
+                "total": round(
+                    total_score,
+                    2,
+                ),
         }
 
         recommendation = create_recommendation(
-            pub=pub,
-            score=total_score,
-            matched_features=matched_features,
-            missing_features=missing_features,
-            score_breakdown=score_breakdown,
+                pub=pub,
+                score=total_score,
+                matched_features=matched_features,
+                missing_features=missing_features,
+                score_breakdown=score_breakdown,
+            )
+
+        print(
+            "Added:",
+            recommendation["name"],
+            recommendation["score"],
         )
 
         recommendations.append(
-            recommendation
+                recommendation
         )
 
+    print(f"\nPubs scored: {len(recommendations)}")
+
+    for recommendation in recommendations:
+        print(
+            recommendation["name"],
+            recommendation["score"],
+        )
     recommendations.sort(
         key=lambda recommendation: (
             recommendation["score"],

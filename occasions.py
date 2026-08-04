@@ -4,7 +4,7 @@ OCCASION_TEMPLATES = {
     "1": {
         "name": "Watching football",
         "locked_preferences": {
-            "football": "must"
+            "football": "essential"
         },
         "default_preferences": {
             "guinness": "nice",
@@ -19,7 +19,7 @@ OCCASION_TEMPLATES = {
     "2": {
         "name": "Pool with friends",
         "locked_preferences": {
-            "pool_table": "must"
+            "pool_table": "essential"
         },
         "default_preferences": {
             "football": "dont_care",
@@ -49,8 +49,8 @@ OCCASION_TEMPLATES = {
         "name": "Date night",
         "locked_preferences": {},
         "default_preferences": {
-            "cocktails": "must",
-            "food": "must",
+            "cocktails": "essential",
+            "food": "essential",
             "beer_garden": "nice"
         },
         "preferred_personalities": [
@@ -62,8 +62,8 @@ OCCASION_TEMPLATES = {
         "name": "Family meal",
         "locked_preferences": {},
         "default_preferences": {
-            "food": "must",
-            "family_friendly": "must",
+            "food": "essential",
+            "family_friendly": "essential",
             "beer_garden": "nice"
         },
         "preferred_personalities": [
@@ -74,7 +74,7 @@ OCCASION_TEMPLATES = {
     "6": {
         "name": "Live music",
         "locked_preferences": {
-            "live_music": "must"
+            "live_music": "essential"
         },
         "default_preferences": {
             "cocktails": "nice",

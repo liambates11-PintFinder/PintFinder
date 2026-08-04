@@ -1,0 +1,28 @@
+timing:
+  evidence:
+    - after_work_destination
+    - after_work_relaxation
+    - atmosphere_builds_before_events
+    - available_after_major_events
+    - available_during_peak_times
+    - customers_stay_longer_than_planned
+    - extended_evenings
+    - flexible_visit_duration
+    - good_for_after_work_drinks
+    - late_evening_comfort
+    - lingering_encouraged
+    - long_customer_dwell_time
+    - match_day_preparation
+    - natural_evening_progression
+    - predictable_busy_periods
+    - prematch_atmosphere
+    - prematch_service_ready
+    - repeat_sport_visits
+    - seasonal_consistency
+    - spontaneous_extended_visits
+    - suitable_for_evening_visits
+    - tournament_atmosphere
+    - transport_home_convenient
+    - weekday_consistency
+    - weekend_consistency
+    - well_managed_peak_periods

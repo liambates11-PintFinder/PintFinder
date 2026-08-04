@@ -118,8 +118,7 @@ def enrich_features_from_reviews(data):
         confidence = review_data[feature]["confidence"]
 
         # Require reasonable confidence
-        if confidence >= 25:
-            data[feature] = True
+        data[f"{feature}_confidence"] = confidence
 
     return data
 
@@ -182,6 +181,11 @@ def get_place_details(place_id):
     pub_name,
     data["review_intelligence"],
 )
+
+    if pub_name == "The Jug":
+        print("\n===== THE JUG =====")
+        print(data["review_intelligence"])
+        print("===================\n")
 
     return data
 

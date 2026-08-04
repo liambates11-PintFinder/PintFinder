@@ -49,6 +49,9 @@ class Pub:
     darts: bool | None = None
     craft_beer: bool | None = None
 
+    pool_table_confidence: int = 0
+    guinness_confidence: int = 0
+
     # Structured signals extracted from venue reviews
     review_intelligence: dict = field(default_factory=dict)
     review_highlights: list = field(default_factory=list)

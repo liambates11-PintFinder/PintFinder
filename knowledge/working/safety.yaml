@@ -1,0 +1,14 @@
+safety:
+  evidence:
+    - calm_crowd
+    - crowd_behaves_respectfully
+    - fair_queueing
+    - feels_safe_arriving_alone
+    - feels_safe_leaving_at_night
+    - safe_after_dark
+    - safe_environment
+    - safe_for_neutral_supporters
+    - safe_for_solo_visitors
+    - safe_match_day_environment
+    - staff_handle_disputes_well
+    - staff_intervene_when_needed

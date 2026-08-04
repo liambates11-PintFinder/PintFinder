@@ -1,0 +1,14 @@
+drinks:
+  evidence:
+    - beer_quality_consistent
+    - consistent_drink_quality
+    - drinks_arrive_promptly
+    - easy_to_order_additional_rounds
+    - excellent_guinness
+    - good_value
+    - guinness_quality_consistent
+    - non_alcoholic_options_supported
+    - prompt_drink_service
+    - short_wait_for_drinks
+    - suitable_for_large_rounds
+    - value_encourages_multiple_rounds

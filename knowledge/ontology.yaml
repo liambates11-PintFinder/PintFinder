@@ -1,0 +1,61 @@
+ontology:
+
+  atmosphere:
+    description: Overall feel and mood of the venue.
+    evidence: []
+
+  service:
+    description: Staff behaviour and speed of service.
+    evidence: []
+
+  comfort:
+    description: Physical comfort during a visit.
+    evidence: []
+
+  social:
+    description: How people interact with each other.
+    evidence: []
+
+  drinks:
+    description: Drink quality and consistency.
+    evidence: []
+
+  food:
+    description: Food experience.
+    evidence: []
+
+  sport:
+    description: Watching live sport.
+    evidence: []
+
+  pool:
+    description: Playing pool.
+    evidence: []
+
+  music:
+    description: Music and entertainment.
+    evidence: []
+
+  safety:
+    description: Feeling safe and welcome.
+    evidence: []
+
+  value:
+    description: Perceived value for money.
+    evidence: []
+
+  venue:
+    description: Physical venue characteristics.
+    evidence: []
+
+  crowd:
+    description: Type and behaviour of customers.
+    evidence: []
+
+  timing:
+    description: Time-based behaviour.
+    evidence: []
+
+  reputation:
+    description: Local reputation and repeat visits.
+    evidence: []

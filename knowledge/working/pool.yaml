@@ -1,0 +1,13 @@
+pool:
+  evidence:
+    - appropriate_for_casual_competition
+    - clear_turn_taking
+    - competitive_but_friendly
+    - fair_turn_taking
+    - pool_crowd
+    - pool_game_availability
+    - pool_game_fairness
+    - pool_game_reliability
+    - pool_league
+    - pool_queue_managed
+    - repeat_pool_visits

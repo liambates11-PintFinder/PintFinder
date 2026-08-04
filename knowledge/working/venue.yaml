@@ -1,0 +1,34 @@
+venue:
+  evidence:
+    - all_day_consistency
+    - available_during_peak_times
+    - bar_queue_does_not_block_views
+    - clean_glassware
+    - clean_tables
+    - clean_toilets
+    - cleanliness_consistent
+    - comfortable_environment
+    - comfortable_indoor_temperature
+    - comfortable_lighting
+    - comfortable_personal_space
+    - comfortable_physical_environment
+    - comfortable_seating
+    - comfortable_waiting_environment
+    - crowd_density_managed
+    - easy_visibility
+    - good_ambient_lighting
+    - good_customer_flow
+    - good_sightlines
+    - inviting_first_impression
+    - manageable_crowd_density
+    - pleasant_temperature
+    - screen_visibility_consistent
+    - seasonal_consistency
+    - sound_quality_consistent
+    - spacious_feeling
+    - stable_atmosphere
+    - table_available_when_booked
+    - temperature_consistent
+    - unobstructed_views
+    - view_not_blocked
+    - well_maintained_environment

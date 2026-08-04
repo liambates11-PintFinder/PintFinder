@@ -1,0 +1,11 @@
+food:
+  evidence:
+    - accurate_food_orders
+    - food_arrives_together
+    - food_arrives_without_delay
+    - food_complements_socialising
+    - food_quality_consistent
+    - food_service_matches_pace_of_visit
+    - prompt_food_service
+    - reasonable_food_wait_time
+    - timely_food_service

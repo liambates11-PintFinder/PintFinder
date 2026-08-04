@@ -1,0 +1,32 @@
+sport:
+  evidence:
+    - available_after_major_events
+    - broadcast_reliability
+    - calm_after_major_events
+    - champions_league_atmosphere
+    - champions_league_reliability
+    - clear_match_information
+    - derby_day_management
+    - football_atmosphere
+    - football_banter_friendly
+    - football_build_up_shown
+    - football_commentary_audible
+    - football_crowd
+    - football_reliability
+    - football_screen_visibility
+    - football_supporter_mix
+    - good_post_match_environment
+    - good_pre_match_environment
+    - hears_commentary_clearly
+    - match_day_preparation
+    - match_day_reliability
+    - prematch_atmosphere
+    - prematch_service_ready
+    - reliable_match_broadcast
+    - safe_for_neutral_supporters
+    - screen_visibility_consistent
+    - shows_advertised_matches
+    - sound_and_picture_synchronised
+    - staff_manage_crowds_well
+    - tournament_atmosphere
+    - transport_home_convenient

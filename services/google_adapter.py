@@ -1,3 +1,7 @@
+from services.venue_intelligence import (
+    calculate_feature_confidence,
+)
+
 from services.review_intelligence import generate_review_highlights
 
 from math import atan2
@@ -107,6 +111,37 @@ def is_open_late(place):
 
     return False
 
+def resolve_feature(
+    place,
+    feature,
+    google_field=None,
+    threshold=25,
+):
+    """
+    Return PintFinder's final opinion on whether
+    a venue has a feature.
+
+    Google data always wins.
+
+    Otherwise use review confidence.
+    """
+
+    if google_field is None:
+        google_field = feature
+
+    google_value = place.get(
+        google_field,
+    )
+
+    if google_value is True:
+        return True
+
+    confidence = place.get(
+        f"{feature}_confidence",
+        0,
+    )
+
+    return confidence >= threshold
 
 def convert_google_pubs(
     google_pubs,
@@ -234,9 +269,9 @@ def convert_google_pubs(
             ),
 
             # Features enriched from review intelligence
-            pool_table=place.get(
+           pool_table=resolve_feature(
+                place,
                 "pool_table",
-                None,
             ),
 
             guinness=place.get(
@@ -259,7 +294,33 @@ def convert_google_pubs(
                 None,
             ),
 
-            craft_beer=place.get(
+            pool_table_confidence=calculate_feature_confidence(
+                feature="pool_table",
+                google_value=place.get("pool_table"),
+                review_confidence=(
+                    place.get(
+                        "review_intelligence",
+                        {}
+                    )
+                    .get("pool_table", {})
+                    .get("confidence", 0)
+                ),
+            ),
+
+            guinness_confidence=calculate_feature_confidence(
+                feature="guinness",
+                google_value=place.get("guinness"),
+                review_confidence=(
+                    place.get(
+                        "review_intelligence",
+                        {}
+                    )
+                    .get("guinness", {})
+                    .get("confidence", 0)
+                ),
+            ),
+
+                    craft_beer=place.get(
                 "craft_beer",
                 None,
             ),
