@@ -1,0 +1,65 @@
+evidence_schema:
+
+  required:
+    - type
+    - confidence
+    - source
+
+  fields:
+
+    type:
+      description: Canonical evidence concept from the PintFinder ontology.
+      example: pool_league
+
+    confidence:
+      description: Confidence that the evidence was correctly inferred.
+      type: integer
+      minimum: 0
+      maximum: 100
+
+    sentiment:
+      description: Sentiment expressed toward the evidence itself.
+      allowed:
+        - positive
+        - neutral
+        - negative
+        - unknown
+
+    source:
+      description: Where the evidence originated.
+      example: google_review
+
+    source_text:
+      description: Original text supporting the evidence.
+
+    observed_at:
+      description: Date the source evidence was published or observed.
+      example: "2026-08-10"
+
+    temporal:
+      description: Time context attached to the evidence.
+
+      fields:
+
+        days:
+          description: Days explicitly or reliably associated with the evidence.
+          example:
+            - thursday
+
+        daypart:
+          allowed:
+            - morning
+            - afternoon
+            - evening
+            - late_night
+            - unknown
+
+        start_time:
+          description: Explicit start time when known.
+
+        end_time:
+          description: Explicit end time when known.
+
+        recurring:
+          description: Whether the reviewer indicates this happens repeatedly.
+          type: boolean

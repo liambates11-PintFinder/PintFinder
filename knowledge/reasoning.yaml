@@ -1,0 +1,52 @@
+reasoning:
+
+  casual_pool_experience:
+
+    contextual_rules:
+
+      - id: pool_league_reduces_casual_availability
+
+        when:
+          evidence:
+            - pool_league
+          context:
+            occasion: pool_with_friends
+            same_time_as_evidence: true
+
+        influences:
+          dimension: availability
+          direction: negative
+
+        explanation:
+          "A pool league indicates a strong pool culture, but when it is taking place during the user's visit it can reduce table availability for casual players."
+
+
+      - id: pool_crowd_reduces_casual_availability
+
+        when:
+          evidence:
+            - pool_crowd
+          context:
+            occasion: pool_with_friends
+            same_time_as_evidence: true
+
+        influences:
+          dimension: availability
+          direction: negative
+
+        explanation:
+          "A busy pool crowd can make it harder for a casual group to get regular games."
+
+
+      - id: pool_league_supports_pool_quality
+
+        when:
+          evidence:
+            - pool_league
+
+        influences:
+          dimension: reliability
+          direction: positive
+
+        explanation:
+          "Regular league activity provides evidence that pool is an established part of the pub rather than an incidental facility."

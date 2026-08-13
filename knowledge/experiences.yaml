@@ -1,0 +1,31 @@
+experiences:
+
+  casual_pool_experience:
+    description: How suitable the pub is for a relaxed game of pool with friends.
+
+    dimensions:
+
+      availability:
+        positive_evidence:
+          - pool_game_availability
+          - pool_queue_managed
+          - clear_turn_taking
+          - fair_turn_taking
+
+        conditional_evidence:
+          - pool_league
+          - pool_crowd
+
+      social_fit:
+        positive_evidence:
+          - competitive_but_friendly
+          - appropriate_for_casual_competition
+
+      reliability:
+        positive_evidence:
+          - pool_game_reliability
+          - repeat_pool_visits
+
+      fairness:
+        positive_evidence:
+          - pool_game_fairness

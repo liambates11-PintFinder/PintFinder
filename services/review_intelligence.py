@@ -1,4 +1,5 @@
 from data.review_keywords import KEYWORDS
+from services.knowledge_engine import load_master_evidence
 
 """
 Review intelligence engine.
@@ -341,3 +342,48 @@ def generate_review_highlights(
         )
 
     return highlights
+
+def extract_contextual_evidence(
+    reviews,
+):
+    """
+    Extract rich contextual evidence from reviews.
+
+    This is separate from the existing keyword-based
+    review intelligence.
+    """
+
+    if not isinstance(reviews, list):
+        return []
+
+    allowed_evidence = load_master_evidence()
+
+    if not allowed_evidence:
+        return []
+
+    print(
+        f"Contextual evidence engine loaded "
+        f"{len(allowed_evidence)} allowed concepts."
+    )
+
+    return []
+if __name__ == "__main__":
+
+    test_reviews = [
+        {
+            "text": {
+                "text": (
+                    "Love this place for pool. "
+                    "The tables are usually easy to get on, "
+                    "except Thursday nights when the league "
+                    "lads take over."
+                )
+            }
+        }
+    ]
+
+    evidence = extract_contextual_evidence(
+        test_reviews
+    )
+
+    print(evidence)

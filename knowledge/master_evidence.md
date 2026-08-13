@@ -310,7 +310,6 @@ warm_welcome
 weekday_consistency
 weekend_consistency
 welcoming_atmosphere
-welcoming_to_newcomers
 well_managed_peak_periods
 well_maintained_environment
 well_timed_service

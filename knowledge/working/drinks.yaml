@@ -2,7 +2,7 @@ drinks:
   evidence:
     - beer_quality_consistent
     - consistent_drink_quality
-    - drinks_arrive_promptly
+    - prompt_drink_service
     - easy_to_order_additional_rounds
     - excellent_guinness
     - good_value

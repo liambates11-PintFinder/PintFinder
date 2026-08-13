@@ -1,13 +1,93 @@
 pool:
   evidence:
-    - appropriate_for_casual_competition
-    - clear_turn_taking
-    - competitive_but_friendly
-    - fair_turn_taking
-    - pool_crowd
-    - pool_game_availability
-    - pool_game_fairness
-    - pool_game_reliability
-    - pool_league
-    - pool_queue_managed
-    - repeat_pool_visits
+    - id: appropriate_for_casual_competition
+      description: >
+        Whether the venue is suitable for informal, non-serious pool
+        competition among friends or casual players. Use for evidence
+        that the setting, atmosphere, pricing, table quality, or general
+        vibe makes it a good place for relaxed competitive play. Do not
+        use for organized leagues or formal tournaments, and do not use
+        for turn-taking fairness or queue management.
+
+    - id: clear_turn_taking
+      description: >
+        Whether players can easily understand whose turn it is during
+        pool games. Use for evidence about obvious shot order, clear
+        rotation, visible indicators, or straightforward play flow that
+        prevents confusion. Do not use for whether turns are fair or
+        equal, only whether they are easy to follow.
+
+    - id: competitive_but_friendly
+      description: >
+        Whether pool play at the venue is described as competitive in a
+        lighthearted, sociable, or good-natured way. Use for evidence of
+        spirited matches without hostility, where competition coexists
+        with a friendly atmosphere. Do not use for fairness of turns,
+        league play, or general crowd quality unless the friendliness is
+        specifically tied to pool competition.
+
+    - id: fair_turn_taking
+      description: >
+        Whether the way turns are allocated in pool is perceived as fair
+        and equitable among players. Use for evidence that players get
+        turns in a balanced, unbiased, or respectful order, including
+        situations where nobody is cut in line. Do not use for clarity
+        of whose turn it is or for queue waiting time; this is about
+        fairness, not visibility or speed.
+
+    - id: pool_crowd
+      description: >
+        Whether the pool area or pool tables tend to attract a particular
+        kind of crowd, or whether the people around the pool tables are
+        described in a notable way. Use for evidence about the character,
+        age, behavior, size, or vibe of the people gathered around pool.
+        Do not use for general venue crowding, table availability, or
+        queue length unless the review specifically describes the
+        pool-playing crowd.
+
+    - id: pool_game_availability
+      description: >
+        Whether customers are likely to be able to access and play on a
+        pool table during their visit. This concerns access, waiting,
+        demand and whether a table can be obtained, not whether the
+        equipment itself is working correctly.
+
+    - id: pool_game_fairness
+      description: >
+        Whether pool games are run or experienced as fair in terms of
+        rules, table use, or match conditions. Use for evidence about
+        unbiased play, even-handed enforcement, equitable access within
+        a game, or conditions that make the game itself feel fair. Do not
+        use for turn clarity alone, queue management, or general
+        availability of tables.
+
+    - id: pool_game_reliability
+      description: >
+        Whether the pub's pool facilities are consistently operational
+        and usable when customers expect them to be. This concerns broken
+        tables, damaged equipment, maintenance problems and recurring
+        faults, not demand or waiting for access.
+
+    - id: pool_league
+      description: >
+        Whether the venue hosts, supports, or is associated with organized
+        pool league play. Use for evidence of league nights, league teams,
+        regular competitive club play, or formal arranged pool
+        competition. Do not use for casual competitive play, friendly
+        matches, or one-off games.
+
+    - id: pool_queue_managed
+      description: >
+        Whether waiting for a pool table is organized or controlled in a
+        clear, orderly way. Use for evidence of a queue system, turn list,
+        staff oversight, or other management that makes waiting for tables
+        structured and predictable. Do not use for whether a table is
+        available at all, or for fairness within a played game.
+
+    - id: repeat_pool_visits
+      description: >
+        Whether reviewers indicate they return specifically for pool or
+        plan to play pool again at the venue. Use for evidence of repeated
+        pool visits, being a regular pool customer, or intentions to come
+        back for more pool games. Do not use for general repeat visits
+        unrelated to pool.
