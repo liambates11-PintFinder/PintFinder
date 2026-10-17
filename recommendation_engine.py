@@ -221,18 +221,19 @@ def calculate_distance_score(
     )
 
 
+
 def score_feature_preferences(
     pub: Any,
     preferences: dict,
 ) -> tuple[float, list, list, dict]:
     """
-    Score a pub against the selected feature preferences.
+    Score feature preferences while distinguishing:
+    True  = confirmed present
+    False = confirmed absent
+    None  = unverified
 
-    Returns:
-        feature_score
-        matched_features
-        missing_features
-        feature_breakdown
+    Positive confidence may provide partial evidence,
+    but does not automatically confirm a feature.
     """
 
     feature_score = 0
@@ -241,7 +242,6 @@ def score_feature_preferences(
     feature_breakdown = {}
 
     for feature_name, preference_value in preferences.items():
-
         preference_level = get_preference_level(preference_value)
 
         if preference_level is None:
@@ -257,51 +257,46 @@ def score_feature_preferences(
 
         if pub_feature_value is True:
             match_score = 1.0
+            status = "confirmed"
+
         elif pub_feature_value is False:
             match_score = 0.0
-        elif isinstance(confidence, (int, float)) and confidence > 0:
-            match_score = max(0.0, min(confidence / 100, 1.0))
-        else:
-            match_score = 0.0
-
-        pub_has_feature = match_score >= 0.5
-
-
-        if preference_level == "essential":
-
-            points = round(
-                (match_score * ESSENTIAL_MATCH_REWARD)
-                - ((1 - match_score) * ESSENTIAL_MISS_PENALTY)
-            )
-
-        elif preference_level == "must":
-
-            points = round(
-                (match_score * MUST_MATCH_REWARD)
-                - ((1 - match_score) * MUST_MISS_PENALTY)
-            )
+            status = "absent"
 
         else:
+            match_score = None
+            status = "unverified"
 
-            points = round(
-                (match_score * NICE_MATCH_REWARD)
-                - ((1 - match_score) * NICE_MISS_PENALTY)
-            )
+        if match_score is None:
+            points = 0
+            pub_has_feature = False
 
-        if pub_has_feature:
+        else:
+            pub_has_feature = match_score >= 0.5
+
+            if preference_level == "essential":
+                points = round(
+                    match_score * ESSENTIAL_MATCH_REWARD
+                    - (1 - match_score) * ESSENTIAL_MISS_PENALTY
+                )
+
+            elif preference_level == "must":
+                points = round(
+                    match_score * MUST_MATCH_REWARD
+                    - (1 - match_score) * MUST_MISS_PENALTY
+                )
+
+            else:
+                points = round(
+                    match_score * NICE_MATCH_REWARD
+                    - (1 - match_score) * NICE_MISS_PENALTY
+                )
+
+        if status == "confirmed":
             matched_features.append(feature_name)
-        else:
-            missing_features.append(feature_name)
 
-        print(
-            feature_name,
-            "| confidence:",
-            confidence,
-            "| match:",
-            round(match_score, 2),
-            "| points:",
-            points,
-        )
+        elif status == "absent":
+            missing_features.append(feature_name)
 
         feature_score += points
 
@@ -309,6 +304,8 @@ def score_feature_preferences(
             "preference": preference_level,
             "value": pub_feature_value,
             "matched": pub_has_feature,
+            "status": status,
+            "confidence": confidence,
             "points": points,
         }
 
@@ -320,23 +317,24 @@ def score_feature_preferences(
     )
 
 
+
+
 def score_review_preferences(
     pub,
     combined_preferences,
 ):
     """
-    Score a pub using review intelligence.
+    Score supporting review evidence using confidence,
+    number of mentions, and sentiment.
+
+    Review evidence does not confirm feature availability.
     """
 
     review_score = 0
     review_breakdown = {}
     matched_review_features = []
 
-    review_data = getattr(
-    pub,
-    "review_intelligence",
-    {},
-)
+    review_data = getattr(pub, "review_intelligence", {}) or {}
 
     for preference_name, importance in combined_preferences.items():
 
@@ -344,36 +342,74 @@ def score_review_preferences(
             continue
 
         review_key = REVIEW_KEY_MAP.get(
-        preference_name,
-        preference_name,
-    )
+            preference_name,
+            preference_name,
+        )
 
-        if review_key not in review_data:
+        evidence = review_data.get(review_key)
+
+        if not isinstance(evidence, dict):
             continue
 
-        confidence = review_data[review_key]["confidence"]
+        confidence = max(
+            0,
+            min(100, float(evidence.get("confidence") or 0)),
+        )
 
-        if confidence < 15:
+        mentions = max(0, int(evidence.get("mentions") or 0))
+        positive = max(0, int(evidence.get("positive") or 0))
+        negative = max(0, int(evidence.get("negative") or 0))
+        neutral = max(0, int(evidence.get("neutral") or 0))
+
+        if confidence < 15 or mentions == 0:
             continue
 
-        points = round(confidence / 10)
+        # Positive reviews contribute +1, negative reviews -1.
+        # Neutral reviews contribute 0.
+        sentiment_total = positive + negative + neutral
 
-        if importance == "must":
-            points *= 2
+        if sentiment_total > 0:
+            sentiment = (positive - negative) / sentiment_total
+        else:
+            sentiment = 0
+
+        # A small number of mentions should not carry
+        # the same weight as repeated evidence.
+        evidence_weight = min(mentions / 5, 1.0)
+
+        base_points = (
+            (confidence / 10)
+            * sentiment
+            * evidence_weight
+        )
+
+        if importance in ("must", "essential"):
+            base_points *= 2
+
+        points = round(base_points)
 
         review_score += points
 
-        review_breakdown[preference_name] = points
+        review_breakdown[preference_name] = {
+            "points": points,
+            "confidence": confidence,
+            "mentions": mentions,
+            "positive": positive,
+            "negative": negative,
+            "neutral": neutral,
+            "sentiment": round(sentiment, 2),
+            "evidence_weight": round(evidence_weight, 2),
+        }
 
-        matched_review_features.append(
-            preference_name
-        )
+        # Intentionally leave matched_review_features empty.
+        # Review evidence is supporting evidence, not confirmation.
 
     return (
-    review_score,
-    review_breakdown,
-    matched_review_features,
-)
+        review_score,
+        review_breakdown,
+        matched_review_features,
+    )
+
 
 def create_recommendation(
     pub: Any,
@@ -631,47 +667,6 @@ def calculate_recommendations(
             combined_preferences,
         )
 
-        for feature in matched_review_features:
-                preference_level = get_preference_level(
-                    combined_preferences.get(feature)
-                )
-
-                if preference_level is None:
-                    continue
-
-                if feature not in matched_features:
-                    matched_features.append(feature)
-
-                if feature in missing_features:
-                    missing_features.remove(feature)
-
-                previous_points = (
-                    feature_breakdown
-                    .get(feature, {})
-                    .get("points", 0)
-                )
-
-                if preference_level == "essential":
-                    corrected_points = ESSENTIAL_MATCH_REWARD
-
-                elif preference_level == "must":
-                    corrected_points = MUST_MATCH_REWARD
-
-                else:
-                    corrected_points = NICE_MATCH_REWARD
-
-                feature_score += (
-                    corrected_points
-                    - previous_points
-                )
-
-                feature_breakdown[feature] = {
-                "preference": preference_level,
-                "value": True,
-                "matched": True,
-                "source": "reviews",
-                "points": corrected_points,
-            }
 
         total_score = (
                 rating_score

@@ -31,17 +31,18 @@ class Pub:
     )
 
     # Google-supported or partially supported features
-    football: bool = False
-    sports_tv: bool = False
-    food: bool = False
-    cocktails: bool = False
-    dog_friendly: bool = False
-    live_music: bool = False
-    beer_garden: bool = False
-    late_open: bool = False
-    serves_beer: bool = False
+    # None = unknown, True = confirmed present, False = confirmed absent
+    football: bool | None = None
+    sports_tv: bool | None = None
+    food: bool | None = None
+    cocktails: bool | None = None
+    dog_friendly: bool | None = None
+    live_music: bool | None = None
+    beer_garden: bool | None = None
+    late_open: bool | None = None
+    serves_beer: bool | None = None
 
-    # Features requiring future custom enrichment
+    # Features requiring custom enrichment
     pool_table: bool | None = None
     guinness: bool | None = None
     family_friendly: bool | None = None
