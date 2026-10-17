@@ -111,34 +111,24 @@ def get_preference_level(value: Any) -> str | None:
     return None
 
 
+
 def extract_occasion_preferences(occasion: Any) -> dict:
     """
-    Extract feature preferences from an occasion template.
-
-    Supported occasion keys include:
-        preferences
-        feature_weights
-        features
-        recommended_features
+    Extract both default and locked preferences
+    from a PintFinder occasion template.
     """
-
     if not isinstance(occasion, dict):
         return {}
 
-    possible_keys = (
-        "preferences",
-        "feature_weights",
-        "features",
-        "recommended_features",
+    preferences = occasion.get(
+        "default_preferences", {}
+    ).copy()
+
+    preferences.update(
+        occasion.get("locked_preferences", {})
     )
 
-    for key in possible_keys:
-        occasion_preferences = occasion.get(key)
-
-        if isinstance(occasion_preferences, dict):
-            return occasion_preferences.copy()
-
-    return {}
+    return preferences
 
 
 def combine_preferences(
@@ -146,11 +136,11 @@ def combine_preferences(
     user_preferences: Any,
 ) -> dict:
     """
-    Combine occasion defaults with the user's selected preferences.
+    Combine occasion defaults with user preferences.
 
-    User selections take priority over occasion defaults.
+    User preferences override defaults, but cannot
+    override locked occasion requirements.
     """
-
     combined_preferences = extract_occasion_preferences(
         occasion
     )
@@ -158,7 +148,13 @@ def combine_preferences(
     if isinstance(user_preferences, dict):
         combined_preferences.update(user_preferences)
 
+    if isinstance(occasion, dict):
+        combined_preferences.update(
+            occasion.get("locked_preferences", {})
+        )
+
     return combined_preferences
+
 
 
 def calculate_rating_score(rating: Any) -> float:
@@ -259,10 +255,14 @@ def score_feature_preferences(
             None,
         )
 
-        if confidence is not None:
-            match_score = confidence / 100
+        if pub_feature_value is True:
+            match_score = 1.0
+        elif pub_feature_value is False:
+            match_score = 0.0
+        elif isinstance(confidence, (int, float)) and confidence > 0:
+            match_score = max(0.0, min(confidence / 100, 1.0))
         else:
-            match_score = 1 if pub_feature_value is True else 0
+            match_score = 0.0
 
         pub_has_feature = match_score >= 0.5
 

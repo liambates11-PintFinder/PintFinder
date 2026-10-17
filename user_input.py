@@ -18,6 +18,7 @@ def ask_occasion(occasion_templates):
 
 def ask_preference(feature_name, default):
     default_text = {
+        "essential": "Essential",
         "must": "Must have",
         "nice": "Nice to have",
         "dont_care": "Don't care"
@@ -27,9 +28,10 @@ def ask_preference(feature_name, default):
 
     print(f"Press Enter to keep default ({default_text[default]})")
 
-    print("1. Must have")
-    print("2. Nice to have")
-    print("3. Don't care")
+    print("1. Essential")
+    print("2. Must have")
+    print("3. Nice to have")
+    print("4. Don't care")
 
     choice = input("> ").strip()
 
@@ -37,12 +39,14 @@ def ask_preference(feature_name, default):
         return default
 
     mapping = {
-        "1": "must",
-        "2": "nice",
-        "3": "dont_care"
+        "1": "essential",
+        "2": "must",
+        "3": "nice",
+        "4": "dont_care"
     }
 
     return mapping.get(choice, default)
+
 
 
 def ask_maximum_distance():
